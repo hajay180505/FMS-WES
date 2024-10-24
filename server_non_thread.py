@@ -17,7 +17,7 @@ lock = threading.Lock()  # Lock for thread safety
 state_size = 4  # As per your DQN setup (x, y for robot, x, y for target)
 action_size = 4  # Actions: up, down, left, right
 agent = DQNAgent(state_size, action_size)  # Load trained model
-agent.load("dqn_fms_model.pth")  # Load your trained model
+agent.load("dqn_fms_model_10000_new_reward.pth")  # Load your trained model
 
 @app.route('/register_robot', methods=['POST'])
 def register_robot():
