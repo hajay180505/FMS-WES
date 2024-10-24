@@ -149,6 +149,7 @@ class WarehouseEnv:
         self.robot_positions : Dict[int, Dict[str, Any] ] = {}
         self.tasks = {}  # Dictionary to hold tasks for each robot
         self.obstacles : List[Tuple[int]] = obstacles if obstacles is not None else []  # Store obstacles as a list
+        self.collision_counters = {}
 
         # Place obstacles in the grid
         for obs in self.obstacles:
@@ -172,6 +173,7 @@ class WarehouseEnv:
             'end_position': end,
             'priority': priority
         }
+        self.collision_counters[robot_id] = 0
         print(f"Robot {robot_id} registered at position {start}, heading to {end}.")
         return True
 
@@ -255,15 +257,18 @@ class WarehouseEnv:
         is_collided, cause = self.is_collision(robot_id, new_position)
         if is_collided:
             if cause == "Hit walls":
+                self.collision_counters[robot_id] += 1  # Increment the collision counter
+                consecutive_penalty = Rewards.HIT_WALLS_AWAY_TARGET * self.collision_counters[robot_id]
+                reward = consecutive_penalty
                 # Calculate distance to the goal
                 current_distance = abs(current_position[0] - end_position[0]) + abs(
                     current_position[1] - end_position[1])
                 new_distance = abs(new_position[0] - end_position[0]) + abs(new_position[1] - end_position[1])
 
                 if abs(current_distance - new_distance) < Config.DISTANCE_THRESHOLD:
-                    reward = Rewards.HIT_WALLS_NEAR_TARGET  # Penalty for hitting a wall
+                    reward += Rewards.HIT_WALLS_NEAR_TARGET  # Penalty for hitting a wall
                 else:
-                    reward = Rewards.HIT_WALLS_AWAY_TARGET  # Penalty for hitting a wall
+                    reward += Rewards.HIT_WALLS_AWAY_TARGET  # Penalty for hitting a wall
 
             else:
                 reward = Rewards.HITS_ROBOT # Severe penalty for colliding with other robots/obstacles

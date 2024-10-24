@@ -111,7 +111,7 @@ def train_fms_dqn(episodes):
                     break
             # env.reset()
         agent.replay()
-    agent.save(f"dqn_fms_model_10000_new_reward.pth")
+    agent.save(f"dqn_fms_model_consec.pth")
 
 
 # Run training
