@@ -9,7 +9,7 @@ DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
 def astar(start, goal, grid):
     def heuristic(a, b):
-        return abs(a[0] - b[0]) + abs(a[1] - b[1])  
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
     if grid[start[0]][start[1]] == 1 or grid[goal[0]][goal[1]] == 1:
         return None
     open_set = []

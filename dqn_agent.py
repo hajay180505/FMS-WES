@@ -11,6 +11,20 @@ from numpy import ndarray
 from numpy._typing import _64Bit
 
 
+class Rewards:
+    # negative rewards
+    HIT_WALLS_NEAR_TARGET = -300
+    HIT_WALLS_AWAY_TARGET = -450
+    HITS_ROBOT = -500
+    MOVING_AWAY_TARGET = -100
+    ITERATION_PENALTY = -1
+
+    # positive rewards
+    TARGET_REACHED = 900
+    MOVING_TOWARDS_TARGET = 450
+#   TARGET_REACHED_FEW_STEPS = 1000
+
+
 #Hyperparameters
 class Config:
     GAMMA : float = 0.95
@@ -20,6 +34,9 @@ class Config:
     LEARNING_RATE : float = 0.001
     BATCH_SIZE : int =  64
     MEMORY_SIZE :int = 10000
+
+    DISTANCE_THRESHOLD = 20
+
 
 # Q-Network architecture
 class DQN(nn.Module):
@@ -169,7 +186,7 @@ class WarehouseEnv:
 
         return False,""
 
-    def step(self, robot_id : int, action) -> tuple[list[int], int, bool ]:
+    def step_og(self, robot_id : int, action) -> tuple[list[int], int, bool ]:
         """Takes an action and moves the robot in the environment."""
         current_position : List[int] = list(self.robot_positions[robot_id]['current_position'])
         end_position : Tuple[int] = self.robot_positions[robot_id]['end_position']
@@ -192,7 +209,10 @@ class WarehouseEnv:
         # Check for collisions
         is_collided, cause = self.is_collision(robot_id, new_position)
         if is_collided:
-            reward = -500  # Severe penalty for collision
+            if cause == "Hit walls":
+                reward = -250
+            else:
+                reward = -500 # Severe penalty for collision
             done = True  # End the episode if a collision occurs
             # print(f"Collision detected for robot {robot_id} at position {new_position} due to {cause}.")
             return current_position, reward, done
@@ -204,10 +224,74 @@ class WarehouseEnv:
 
         # Reward for reaching the goal
         if done:
-            reward : int = 1000
+            reward : int = 100
             print(f"Robot {robot_id} has reached its destination.")
         else:
             reward = -1  # Small penalty for each step
+
+        return new_position, reward, done
+
+    def step(self, robot_id: int, action) -> tuple[list[int], int, bool]:
+        """Takes an action and moves the robot in the environment."""
+        current_position: List[int] = list(self.robot_positions[robot_id]['current_position'])
+        end_position: Tuple[int] = self.robot_positions[robot_id]['end_position']
+
+        # Determine the new position based on the action
+        new_position = current_position.copy()  # Copy current position to avoid modifying it
+        if action == 0:  # Move right
+            new_position[0] += 1
+        elif action == 1:  # Move down
+            new_position[1] += 1
+        elif action == 2:  # Move left
+            new_position[0] -= 1
+        elif action == 3:  # Move up
+            new_position[1] -= 1
+
+        # Boundary checks
+        new_position[0] = np.clip(new_position[0], 0, self.grid_size[0] - 1)
+        new_position[1] = np.clip(new_position[1], 0, self.grid_size[1] - 1)
+
+        # Check for collisions
+        is_collided, cause = self.is_collision(robot_id, new_position)
+        if is_collided:
+            if cause == "Hit walls":
+                # Calculate distance to the goal
+                current_distance = abs(current_position[0] - end_position[0]) + abs(
+                    current_position[1] - end_position[1])
+                new_distance = abs(new_position[0] - end_position[0]) + abs(new_position[1] - end_position[1])
+
+                if abs(current_distance - new_distance) < Config.DISTANCE_THRESHOLD:
+                    reward = Rewards.HIT_WALLS_NEAR_TARGET  # Penalty for hitting a wall
+                else:
+                    reward = Rewards.HIT_WALLS_AWAY_TARGET  # Penalty for hitting a wall
+
+            else:
+                reward = Rewards.HITS_ROBOT # Severe penalty for colliding with other robots/obstacles
+            done = True  # End the episode if a collision occurs
+            # print(f"Collision detected for robot {robot_id} at position {new_position} due to {cause}.")
+            return current_position, reward, done
+
+        # Calculate distance to the goal
+        current_distance = abs(current_position[0] - end_position[0]) + abs(current_position[1] - end_position[1])
+        new_distance = abs(new_position[0] - end_position[0]) + abs(new_position[1] - end_position[1])
+
+        # Move the robot to the new position
+        self.robot_positions[robot_id]['current_position'] = new_position
+        self.render()
+
+        # Check if the robot reached its destination
+        done = (new_position == list(end_position))
+        if done:
+            reward = Rewards.TARGET_REACHED  # Reward for reaching the goal
+            print(f"Robot {robot_id} has reached its destination.")
+        else:
+            # Reward for getting closer, penalty for moving away
+            if new_distance < current_distance:
+                reward = Rewards.MOVING_TOWARDS_TARGET  # Reward for reducing the distance to the goal
+            elif new_distance > current_distance:
+                reward = Rewards.MOVING_AWAY_TARGET  # Penalty for moving farther from the goal
+            else:
+                reward = Rewards.ITERATION_PENALTY  # Small step penalty
 
         return new_position, reward, done
 

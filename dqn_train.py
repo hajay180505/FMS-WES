@@ -3,7 +3,9 @@ from typing import List, Dict, Tuple
 import numpy as np
 from dqn_agent import DQNAgent, WarehouseEnv  # Import the WarehouseEnv class
 import logging
+import datetime
 
+presentDate = datetime.datetime.now()
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -109,7 +111,7 @@ def train_fms_dqn(episodes):
                     break
             # env.reset()
         agent.replay()
-    agent.save("dqn_fms_model.pth")
+    agent.save(f"dqn_fms_model_10000_new_reward.pth")
 
 
 # Run training
