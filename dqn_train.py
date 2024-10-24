@@ -17,15 +17,40 @@ obstacles = [
     (4, 2), (4, 7), (5, 5), (6, 3), (6, 8),
     (7, 2), (7, 9), (8, 1), (8, 5), (9, 4)
 ]
+#
+# robots : List[Dict[str, int| Tuple[int]]]= [
+#     {'id': 1, 'start': (0, 0), 'end': (9, 9), 'priority': 1},  # Robot 1
+#     {'id': 2, 'start': (9, 0), 'end': (0, 9), 'priority': 2},   # Robot 2
+#     {'id': 3, 'start': (4, 9), 'end': (0, 4), 'priority': 3},  # Robot 2
+# ]
 
-robots : List[Dict[str, int| Tuple[int]]]= [
-    {'id': 1, 'start': (0, 0), 'end': (9, 9), 'priority': 1},  # Robot 1
-    {'id': 2, 'start': (9, 0), 'end': (0, 9), 'priority': 2},   # Robot 2
-    {'id': 3, 'start': (4, 9), 'end': (0, 4), 'priority': 3},  # Robot 2
+robots : List[Dict[str, int| Tuple[int]]] = [
+    {'id': 1, 'start': (0, 0), 'end': (9, 9), 'priority': 1},
+    {'id': 2, 'start': (9, 0), 'end': (0, 9), 'priority': 2},
+    {'id': 3, 'start': (4, 9), 'end': (0, 4), 'priority': 3},
+    {'id': 4, 'start': (0, 5), 'end': (9, 6), 'priority': 4},
+    {'id': 5, 'start': (5, 0), 'end': (2, 9), 'priority': 5},
+    {'id': 6, 'start': (3, 0), 'end': (9, 2), 'priority': 6},
+    {'id': 7, 'start': (9, 7), 'end': (0, 8), 'priority': 7},
+    {'id': 8, 'start': (0, 6), 'end': (8, 9), 'priority': 8},
+    {'id': 9, 'start': (5, 9), 'end': (1, 0), 'priority': 9},
+    {'id': 10, 'start': (0, 3), 'end': (9, 5), 'priority': 10},
+    {'id': 11, 'start': (7, 0), 'end': (2, 8), 'priority': 11},
+    {'id': 12, 'start': (8, 0), 'end': (1, 9), 'priority': 12},
+    {'id': 13, 'start': (6, 6), 'end': (9, 0), 'priority': 13},
+    {'id': 14, 'start': (0, 7), 'end': (5, 9), 'priority': 14},
+    {'id': 15, 'start': (3, 8), 'end': (9, 3), 'priority': 15},
+    {'id': 16, 'start': (0, 2), 'end': (9, 8), 'priority': 16},
+    {'id': 17, 'start': (4, 0), 'end': (9, 1), 'priority': 17},
+    {'id': 18, 'start': (9, 3), 'end': (2, 0), 'priority': 18},
+    {'id': 19, 'start': (0, 9), 'end': (5, 4), 'priority': 19},
+    {'id': 20, 'start': (2, 2), 'end': (8, 7), 'priority': 20}
 ]
 
+
+
 # Hyperparameters
-episodes : int = 10000 # Number of episodes to train
+episodes : int = 1000 # Number of episodes to train
 state_size : int = 4   # (robot_x, robot_y, task_x, task_y)
 action_size : int = 4  # Move up, down, left, right
 
@@ -33,47 +58,6 @@ action_size : int = 4  # Move up, down, left, right
 agent = DQNAgent(state_size, action_size)
 env = WarehouseEnv(obstacles= obstacles, grid_size=grid_size,  num_robots= 2)
 
-# # Training loop
-# def train_fms_dqn(episodes):
-#     for e in range(episodes):
-#         # Register each robot in the environment
-#         for robot in robots:
-#             env.register_robot(robot['id'], robot['start'], robot['end'], robot['priority'])
-#
-#             # Reset environment and get initial state for this robot
-#             state = env.reset(robot['id']) #FIXME
-#             logging.info(f'Episode: {e}, Robot ID: {robot["id"]}, Initial State: {state}')
-#
-#             # print(f'Initial State for Robot {robot["id"]}: {state}')  # Debugging line
-#             state = np.reshape(state, [1, state_size])  # Reshape the state correctly
-#             total_reward = 0
-#
-#             for time in range(500):  # Limiting each episode to 500 steps
-#                 # Agent takes an action for the robot
-#                 action = agent.act(state)
-#
-#                 # Environment responds to the action of the robot
-#                 next_state, reward, done, _ = env.step(robot['id'], action)
-#                 next_state = np.reshape(next_state, [1, state_size])
-#
-#                 # Store experience and train
-#                 agent.remember(state, action, reward, next_state, done)
-#                 state = next_state
-#                 total_reward += reward
-#
-#                 if done:
-#                     logging.info(
-#                         f"Episode {e}/{episodes} - Total Reward for Robot {robot['id']}: {total_reward} - Epsilon: {agent.epsilon}"
-#                     )
-#                     # print(f"Episode {e}/{episodes} - Total Reward for Robot {robot['id']}: {total_reward} - Epsilon: {agent.epsilon}")
-#                     break
-#
-#         # Train the agent using the replay buffer
-#         agent.replay()
-#
-#     # Save the trained model
-#     agent.save("dqn_fms_model.pth")
-#
 
 def train_fms_dqn(episodes):
     for robot in robots:
