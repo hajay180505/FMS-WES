@@ -119,7 +119,7 @@ def main():
     tasks = reassign_priorities(tasks)
     expected_times = [calculate_expected_time(task['start'], task['end'], grid) for task in tasks]
     robot_assignment = optimize_robot_assignment(tasks, robots, expected_times)
-
+    
     print("\nTask Assignments:")
     for task, robot in robot_assignment:
         print(f"Task {task['id']} assigned to Robot {robot['id']}")
