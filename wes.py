@@ -127,7 +127,7 @@ def main():
 
         # Prepare arguments for client.py
         client_args = [
-            'python', 'client.py',
+            'python', 'client_no_gui.py',
             '--id', str(task['id']),
             '--start', str(task['start'][0]), str(task['start'][1]),
             '--end', str(task['end'][0]), str(task['end'][1]),
