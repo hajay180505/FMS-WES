@@ -56,16 +56,11 @@ def get_next_action(robot_id, state):
         st.error(f"❌ Error getting action for Robot {robot_id}: {e}")
     return None
 
-def render_grid(grid, robot_position, goal_position):
-    grid_display = st.empty()
-    grid[goal_position[1], goal_position[0]] = GOAL_ICON
-    for obstacle in OBSTACLES:
-        grid[obstacle[1], obstacle[0]] = OBSTACLE_ICON
-    grid[robot_position[1], robot_position[0]] = ROBOT_ICON
-
-    with grid_display.container():
-        for row in grid:
-            st.write("".join(row))
+def render_grid(grid):
+    """Render the grid in a single display update."""
+    st.write("")  # To create a space
+    for row in grid:
+        st.write("".join(row))
 
 def calculate_manhattan_distance(pos1, pos2):
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
@@ -74,13 +69,23 @@ def monitor_robot(robot_id, start, end):
     state = np.array([start[0], start[1], end[0], end[1]])
     actions_map = {0: "Move Right", 1: "Move Down", 2: "Move Left", 3: "Move Up"}
 
+    # Initialize the grid and place obstacles
     grid = np.full((GRID_SIZE, GRID_SIZE), EMPTY_ICON)
+    for obstacle in OBSTACLES:
+        grid[obstacle[1], obstacle[0]] = OBSTACLE_ICON
+    
+    grid[start[1], start[0]] = ROBOT_ICON  # Place the robot in the starting position
+    grid[end[1], end[0]] = GOAL_ICON       # Place the goal in the end position
 
     total_distance = calculate_manhattan_distance(start, end)
     progress_bar = st.progress(0.0)
 
     step_count = 0
     max_steps = GRID_SIZE * 100
+
+    # Timer initialization
+    start_time = time.time()
+    timer_display = st.empty()  # Placeholder for the timer display
 
     try:
         while step_count < max_steps:
@@ -104,17 +109,23 @@ def monitor_robot(robot_id, start, end):
             elif action == 3 and is_valid_position(new_x, new_y - 1):
                 new_y -= 1
 
-            grid[state[1], state[0]] = EMPTY_ICON
-            state[0], state[1] = new_x, new_y
+            grid[state[1], state[0]] = EMPTY_ICON  # Clear old position
+            state[0], state[1] = new_x, new_y  # Update state with new position
+            grid[state[1], state[0]] = ROBOT_ICON  # Place robot in new position
 
-            render_grid(grid, (new_x, new_y), tuple(end))
+            render_grid(grid)  # Render the updated grid
 
             remaining_distance = calculate_manhattan_distance((new_x, new_y), end)
             progress = max(0.0, min(1.0, (total_distance - remaining_distance) / total_distance))
             progress_bar.progress(progress)
 
+            # Update the timer
+            elapsed_time = time.time() - start_time
+            timer_display.markdown(f"⏱️ **Elapsed Time:** {elapsed_time:.2f} seconds")
+
             if (new_x, new_y) == tuple(end):
                 st.success(f"🎯 Robot {robot_id} has reached its destination!")
+                timer_display.empty()  # Clear the timer display
                 break
 
             step_count += 1
